@@ -8,6 +8,7 @@ use Livewire\WithPagination;
 use Livewire\Attributes\Title;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 #[Title('Manajemen Pengguna')]
@@ -32,6 +33,12 @@ class UserManagement extends Component
     public $selectedRoles = [];
     public $availableRoles = [];
     public $roleUser = null;
+
+    // Delete User Modal
+    public $showDeleteModal = false;
+    public $deleteUserId = null;
+    public $deleteUserModel = null;
+    public $confirmDeleteName = '';
 
     protected $queryString = ['search', 'page'];
 
@@ -134,6 +141,64 @@ class UserManagement extends Component
         $this->roleUserId = null;
         $this->selectedRoles = [];
         $this->roleUser = null;
+    }
+
+    // Delete User Methods
+    public function deleteUser($userId)
+    {
+        $this->deleteUserId = $userId;
+        $this->deleteUserModel = User::find($userId);
+
+        if ($this->deleteUserModel) {
+            $this->confirmDeleteName = '';
+            $this->showDeleteModal = true;
+        }
+    }
+
+    public function confirmDelete()
+    {
+        $this->validate([
+            'confirmDeleteName' => 'required|string',
+        ]);
+
+        if (!$this->deleteUserModel) {
+            session()->flash('error', 'Pengguna tidak ditemukan.');
+            $this->closeDeleteModal();
+            return;
+        }
+
+        // Check if the entered name matches the user's name
+        if (trim($this->confirmDeleteName) !== trim($this->deleteUserModel->name)) {
+            $this->addError('confirmDeleteName', 'Nama yang dimasukkan tidak sesuai dengan nama pengguna.');
+            return;
+        }
+
+        // Prevent self-deletion
+        if ($this->deleteUserModel->id === Auth::id()) {
+            session()->flash('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+            $this->closeDeleteModal();
+            return;
+        }
+
+        try {
+            $userName = $this->deleteUserModel->name;
+            $this->deleteUserModel->delete();
+            
+            session()->flash('message', "Pengguna {$userName} berhasil dihapus.");
+        } catch (\Exception $e) {
+            session()->flash('error', 'Terjadi kesalahan saat menghapus pengguna.');
+        }
+
+        $this->closeDeleteModal();
+    }
+
+    public function closeDeleteModal()
+    {
+        $this->showDeleteModal = false;
+        $this->deleteUserId = null;
+        $this->deleteUserModel = null;
+        $this->confirmDeleteName = '';
+        $this->resetErrorBag();
     }
 
     public function render()

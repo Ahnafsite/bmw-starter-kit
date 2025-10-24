@@ -141,6 +141,15 @@
                                         >
                                             <flux:icon.user-group class="w-4 h-4" />
                                         </button>
+                                        @if($user->id !== auth()->id())
+                                            <button
+                                                wire:click="deleteUser({{ $user->id }})"
+                                                class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                                title="Hapus Pengguna"
+                                            >
+                                                <flux:icon.trash class="w-4 h-4" />
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -306,6 +315,93 @@
                     </flux:button>
                     <flux:button type="submit" variant="primary">
                         Simpan Role
+                    </flux:button>
+                </div>
+            </form>
+        </div>
+    </flux:modal>
+
+    <!-- Delete User Confirmation Modal -->
+    <flux:modal wire:model="showDeleteModal" class="md:w-96">
+        <div class="space-y-6">
+            <div class="text-center sm:text-left">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+                            <flux:icon.exclamation-triangle class="h-6 w-6 text-red-600 dark:text-red-400" />
+                        </div>
+                    </div>
+                    <div>
+                        <flux:heading size="lg" class="text-zinc-900 dark:text-zinc-100">
+                            Hapus Pengguna
+                        </flux:heading>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                        Tindakan ini tidak dapat dibatalkan. Untuk mengonfirmasi penghapusan, ketik nama pengguna yang akan dihapus.
+                    </p>
+                </div>
+            </div>
+
+            @if($deleteUserModel)
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 border border-zinc-200 dark:border-zinc-700">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10">
+                            <div class="h-10 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                    {{ $deleteUserModel->initials() }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                {{ $deleteUserModel->name }}
+                            </div>
+                            <div class="text-sm text-zinc-500 dark:text-zinc-400">
+                                {{ $deleteUserModel->email }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <form wire:submit.prevent="confirmDelete" class="space-y-4">
+                <div>
+                    <flux:field>
+                        <flux:label>Konfirmasi dengan mengetik nama pengguna</flux:label>
+                        <flux:input
+                            wire:model="confirmDeleteName"
+                            placeholder="{{ $deleteUserModel ? $deleteUserModel->name : 'Nama pengguna' }}"
+                            autocomplete="off"
+                        />
+                        <flux:description>
+                            Ketik "<strong>{{ $deleteUserModel ? $deleteUserModel->name : '' }}</strong>" untuk mengonfirmasi penghapusan.
+                        </flux:description>
+                        <flux:error name="confirmDeleteName" />
+                    </flux:field>
+                </div>
+
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <flux:icon.exclamation-triangle class="h-5 w-5 text-red-400" />
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-800 dark:text-red-200">
+                                <strong>Peringatan:</strong> Tindakan ini akan menghapus pengguna secara permanen dan tidak dapat dibatalkan.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 pt-4">
+                    <flux:spacer />
+                    <flux:button type="button" wire:click="closeDeleteModal" variant="ghost">
+                        Batal
+                    </flux:button>
+                    <flux:button type="submit" variant="danger">
+                        Hapus Pengguna
                     </flux:button>
                 </div>
             </form>
